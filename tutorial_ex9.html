@@ -1,0 +1,62 @@
+<html>
+<head><title>A Leaflet map!</title>
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css"/>
+  <link rel="stylesheet" href="libs/MarkerCluster.css"/> 
+  <script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js"></script>
+  <script src="libs/leaflet.markercluster.js"></script> 
+  <script src="libs/leaflet-heat.js"></script> 
+  <script src="libs/jquery-2.1.1.min.js"></script> 
+  <style>
+    #map{ height: 100% }
+  </style>
+</head>
+<body>
+
+  <div id="map" style="width: 600px; height: 400px"></div>
+  <script>
+
+  // initialize the map
+  var map = L.map('map').setView([42.35, -71.08], 13);
+
+  // load a tile layer
+  L.tileLayer('http://tiles.mapc.org/basemap/{z}/{x}/{y}.png',
+    {
+      attribution: 'Tiles by <a href="http://mapc.org">MAPC</a>, Data by <a href="http://mass.gov/mgis">MassGIS</a>',
+      maxZoom: 17,
+      minZoom: 9
+    }).addTo(map);
+  
+    $.getJSON("libs/neighborhoods.geojson",function(hoodData){
+      L.geoJson(hoodData , {
+        style: function(feature){
+          var fillColor,
+              density = feature.properties.density;
+          if ( density > 80 ) fillColor = "#006837";
+          else if ( density > 40 ) fillColor = "#31a354";
+          else if ( density > 20 ) fillColor = "#78c679";
+          else if ( density > 10 ) fillColor = "#c2e699";
+          else if ( density > 0 ) fillColor = "#ffffcc";
+          else fillColor = "#f7f7f7";  // no data
+          return { color: "#999", weight: 1, fillColor: fillColor, fillOpacity: .6 };
+        },
+        onEachFeature: function( feature, layer ){
+          layer.bindPopup( "<strong>" + feature.properties.Name + "</strong><br/>" + feature.properties.density + " rats per square mile" )
+        }
+      } ).addTo(map);
+    });
+
+    $.getJSON("libs/rodents.geojson",function(data){
+        var locations = data.features.map(function(rat) {
+          var location = rat.geometry.coordinates.reverse();
+          location.push(0.5);
+          return location;
+        });
+
+        var heat = L.heatLayer(locations, { radius: 35 });
+        map.addLayer(heat); 
+    });
+
+
+  </script>
+</body>
+</html>
